@@ -1,23 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Language Recognition</title>
+  <meta charset="UTF-8">
+  <title>Sign Language Translator</title>
 </head>
 <body>
-    <h1>Sign Language Recognition</h1>
-    <p>Detected Gesture: <span id="gesture"></span></p>
-    <div>
-        <img src="{{ url_for('video_feed') }}" alt="Video Feed">
-    </div>
+  <h1>Live Sign Language Translator</h1>
+  <video id="video" autoplay playsinline width="320" height="240"></video>
+  <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
+  <p id="prediction">Prediction: </p>
 
-    <script>
-        // JavaScript to handle the predicted gesture updates
-        var socket = new WebSocket("ws://localhost:5000/video_feed");
-        socket.onmessage = function(event) {
-            document.getElementById("gesture").textContent = event.data;  // Update with gesture
-        };
-    </script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
