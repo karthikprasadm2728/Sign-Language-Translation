@@ -1,15 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Sign Language Translator</title>
+    <title>Sign Language Translator</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        #videoElement { width: 640px; height: 480px; background: #333; margin: 20px auto; }
+        #canvas { display: none; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        #result { margin-top: 20px; font-size: 24px; font-weight: bold; }
+    </style>
 </head>
 <body>
-  <h1>Live Sign Language Translator</h1>
-  <video id="video" autoplay playsinline width="320" height="240"></video>
-  <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
-  <p id="prediction">Prediction: </p>
-
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <h1>Sign Language Translator</h1>
+    
+    <video id="videoElement" autoplay></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+    
+    <button id="captureBtn">Capture & Translate</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        const video = document.getElementById('videoElement');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const resultDiv = document.getElementById('result');
+        
+        // Access webcam
+        if (navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                })
+                .catch(error => {
+                    console.error("Error accessing webcam:", error);
+                    resultDiv.textContent = "Error accessing webcam";
+                });
+        }
+        
+        // Capture and process image
+        document.getElementById('captureBtn').addEventListener('click', () => {
+            // Draw video frame to canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Get image data
+            const imageData = canvas.toDataURL('image/jpeg');
+            
+            // Send to server
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ image: imageData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultDiv.textContent = `Error: ${data.error}`;
+                } else {
+                    resultDiv.textContent = `Prediction: ${data.prediction} (${(data.confidence * 100).toFixed(1)}% confidence)`;
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                resultDiv.textContent = "Error processing request";
+            });
+        });
+    </script>
 </body>
 </html>
