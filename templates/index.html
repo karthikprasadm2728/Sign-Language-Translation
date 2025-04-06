@@ -1,72 +1,44 @@
+<!-- templates/index.html -->
 <!DOCTYPE html>
 <html>
 <head>
     <title>Sign Language Translator</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
-        #videoElement { width: 640px; height: 480px; background: #333; margin: 20px auto; }
-        #canvas { display: none; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
-        #result { margin-top: 20px; font-size: 24px; font-weight: bold; }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection@0.0.7"></script>
 </head>
 <body>
-    <h1>Sign Language Translator</h1>
-    
-    <video id="videoElement" autoplay></video>
-    <canvas id="canvas" width="640" height="480"></canvas>
-    
-    <button id="captureBtn">Capture & Translate</button>
-    
+    <video id="webcam" autoplay playsinline></video>
+    <button id="capture">Capture & Translate</button>
     <div id="result"></div>
-    
+
     <script>
-        const video = document.getElementById('videoElement');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const resultDiv = document.getElementById('result');
-        
-        // Access webcam
-        if (navigator.mediaDevices.getUserMedia) {
+        // Load model and hand detector
+        async function setup() {
+            const model = await tf.loadLayersModel('model/model.json');
+            const detector = await handPoseDetection.createDetector(
+                handPoseDetection.SupportedModels.MediaPipeHands
+            );
+            
+            document.getElementById('capture').onclick = async () => {
+                const video = document.getElementById('webcam');
+                const hands = await detector.estimateHands(video);
+                
+                if (hands.length > 0) {
+                    // Process hand landmarks and predict
+                    const prediction = model.predict(preprocess(hands[0]));
+                    const label = ['Hello', 'Yes', 'No', 'I Love You', 'Okay', 'Please', 'Thank You'][
+                        prediction.argMax(1).dataSync()[0]
+                    ];
+                    document.getElementById('result').textContent = label;
+                }
+            };
+            
+            // Start webcam
             navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    video.srcObject = stream;
-                })
-                .catch(error => {
-                    console.error("Error accessing webcam:", error);
-                    resultDiv.textContent = "Error accessing webcam";
-                });
+                .then(stream => document.getElementById('webcam').srcObject = stream);
         }
         
-        // Capture and process image
-        document.getElementById('captureBtn').addEventListener('click', () => {
-            // Draw video frame to canvas
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // Get image data
-            const imageData = canvas.toDataURL('image/jpeg');
-            
-            // Send to server
-            fetch('/predict', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ image: imageData })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    resultDiv.textContent = `Error: ${data.error}`;
-                } else {
-                    resultDiv.textContent = `Prediction: ${data.prediction} (${(data.confidence * 100).toFixed(1)}% confidence)`;
-                }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                resultDiv.textContent = "Error processing request";
-            });
-        });
+        setup();
     </script>
 </body>
 </html>
