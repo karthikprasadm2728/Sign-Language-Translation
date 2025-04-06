@@ -8,8 +8,16 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY . .
+# Copy only required files first (helps with caching)
+COPY requirements.txt .
 
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the app code and model
+COPY app.py .
+COPY model/ model/
+# If you have other folders (like utils/, static/, etc.), add them too:
+# COPY utils/ utils/
 
 CMD ["python", "app.py"]
