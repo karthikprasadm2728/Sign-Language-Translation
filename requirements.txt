@@ -1,5 +1,5 @@
 Flask==3.0.3
 opencv-python==4.11.0.86
-numpy==1.24.4
 tensorflow==2.13.1
 cvzone==1.5.5
+gunicorn==20.1.0
