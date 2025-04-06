@@ -1,44 +1,35 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html>
 <head>
     <title>Sign Language Translator</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection@0.0.7"></script>
 </head>
 <body>
-    <video id="webcam" autoplay playsinline></video>
-    <button id="capture">Capture & Translate</button>
+    <input type="file" id="upload" accept="image/*" />
+    <button onclick="sendImage()">Predict</button>
     <div id="result"></div>
 
     <script>
-        // Load model and hand detector
-        async function setup() {
-            const model = await tf.loadLayersModel('model/model.json');
-            const detector = await handPoseDetection.createDetector(
-                handPoseDetection.SupportedModels.MediaPipeHands
-            );
-            
-            document.getElementById('capture').onclick = async () => {
-                const video = document.getElementById('webcam');
-                const hands = await detector.estimateHands(video);
-                
-                if (hands.length > 0) {
-                    // Process hand landmarks and predict
-                    const prediction = model.predict(preprocess(hands[0]));
-                    const label = ['Hello', 'Yes', 'No', 'I Love You', 'Okay', 'Please', 'Thank You'][
-                        prediction.argMax(1).dataSync()[0]
-                    ];
-                    document.getElementById('result').textContent = label;
-                }
+        function sendImage() {
+            const fileInput = document.getElementById('upload');
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onloadend = function () {
+                fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ image: reader.result })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('result').textContent = "Prediction: " + data.prediction;
+                });
             };
-            
-            // Start webcam
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => document.getElementById('webcam').srcObject = stream);
+
+            if (file) reader.readAsDataURL(file);
         }
-        
-        setup();
     </script>
 </body>
 </html>
