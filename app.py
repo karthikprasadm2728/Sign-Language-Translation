@@ -9,7 +9,7 @@ import os
 app = Flask(__name__)
 
 # Load the model
-model_path = os.path.join(os.path.dirname(__file__), 'model/mobilenetv3_sign_language_model.keras')
+model_path = os.path.join(os.path.dirname(__file__), 'Model/mobilenetv3_sign_language_model.keras')
 model = tf.keras.models.load_model(model_path)
 
 # Classes (update based on your training)
