@@ -1,49 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Live Sign Language Translator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Language Translator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #121212;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      color: #ffffff;
+      letter-spacing: 1px;
+    }
+
+    .video-container {
+      max-width: 720px;
+      width: 100%;
+      background-color: #1e1e1e;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 6px 25px rgba(255, 255, 255, 0.05);
+      border: 1px solid #333;
+    }
+
+    video {
+      width: 100%;
+      border-radius: 8px;
+      border: 2px solid #ffffff;
+    }
+
+    p {
+      margin-top: 25px;
+      font-size: 1.2rem;
+      color: #cccccc;
+    }
+
+    #gesture {
+      font-weight: bold;
+      color: #ffffff;
+    }
+
+    canvas {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-    <h2>Live Sign Language Translator</h2>
+  <h1>Sign Language Translator</h1>
+  <div class="video-container">
     <video id="webcam" autoplay playsinline width="224" height="224"></video>
-    <canvas id="canvas" width="224" height="224" style="display: none;"></canvas>
-    <p id="result">Prediction: </p>
+    <canvas id="canvas" width="224" height="224"></canvas>
+  </div>
+  <p>Detected Gesture: <span id="gesture">Waiting...</span></p>
 
-    <script>
-        const video = document.getElementById('webcam');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
+  <script>
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const gestureEl = document.getElementById('gesture');
 
-        // Start webcam stream
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(stream => {
-                video.srcObject = stream;
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
 
-                // When the webcam stream starts, begin predictions
-                video.onloadedmetadata = () => {
-                    setInterval(() => {
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        const dataURL = canvas.toDataURL('image/jpeg');
+        video.onloadedmetadata = () => {
+          setInterval(() => {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/jpeg');
 
-                        fetch('/predict', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ image: dataURL })
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            document.getElementById('result').textContent = "Prediction: " + data.prediction;
-                        })
-                        .catch(err => {
-                            document.getElementById('result').textContent = "Error: " + err.message;
-                        });
-                    }, 1000); // every 1 second
-                };
+            fetch('/predict', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: dataURL })
+            })
+            .then(res => res.json())
+            .then(data => {
+              gestureEl.textContent = data.prediction;
             })
             .catch(err => {
-                alert("Webcam access denied or not supported.");
-                console.error(err);
+              gestureEl.textContent = "Error";
+              console.error(err);
             });
-    </script>
+          }, 1000);
+        };
+      })
+      .catch(err => {
+        alert("Webcam access denied or not supported.");
+        console.error(err);
+      });
+  </script>
 </body>
 </html>
