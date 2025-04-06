@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Language Translator</title>
-    <style>
-        body { background-color: #f0f0f0; text-align: center; }
-        h1 { font-size: 2em; color: #333; }
-        .video-container { margin: 20px auto; }
-        video { width: 100%; max-width: 640px; height: auto; border: 2px solid #000; }
-    </style>
+    <title>Sign Language Recognition</title>
 </head>
 <body>
-    <h1>Sign Language Translator</h1>
-    <div class="video-container">
-        <img src="{{ url_for('video_feed') }}" width="100%" alt="Sign Language Translator Video Feed"/>
-    </div>
+    <h1>Sign Language Recognition</h1>
     <p>Detected Gesture: <span id="gesture"></span></p>
+    <div>
+        <img src="{{ url_for('video_feed') }}" alt="Video Feed">
+    </div>
+
+    <script>
+        // JavaScript to handle the predicted gesture updates
+        var socket = new WebSocket("ws://localhost:5000/video_feed");
+        socket.onmessage = function(event) {
+            document.getElementById("gesture").textContent = event.data;  // Update with gesture
+        };
+    </script>
 </body>
 </html>
