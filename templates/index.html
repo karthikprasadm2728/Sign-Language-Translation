@@ -1,4 +1,3 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,7 +7,6 @@
     <h2>Live Sign Language Translator</h2>
     <video id="webcam" autoplay playsinline width="224" height="224"></video>
     <canvas id="canvas" width="224" height="224" style="display: none;"></canvas>
-    <button onclick="captureAndSend()">Translate</button>
     <p id="result">Prediction: </p>
 
     <script>
@@ -20,28 +18,32 @@
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 video.srcObject = stream;
-            });
 
-        function captureAndSend() {
-            // Draw current frame to canvas
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const dataURL = canvas.toDataURL('image/jpeg');
+                // When the webcam stream starts, begin predictions
+                video.onloadedmetadata = () => {
+                    setInterval(() => {
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const dataURL = canvas.toDataURL('image/jpeg');
 
-            fetch('/predict', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ image: dataURL })
-            })
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('result').textContent = "Prediction: " + data.prediction;
+                        fetch('/predict', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ image: dataURL })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            document.getElementById('result').textContent = "Prediction: " + data.prediction;
+                        })
+                        .catch(err => {
+                            document.getElementById('result').textContent = "Error: " + err.message;
+                        });
+                    }, 1000); // every 1 second
+                };
             })
             .catch(err => {
-                document.getElementById('result').textContent = "Error: " + err.message;
+                alert("Webcam access denied or not supported.");
+                console.error(err);
             });
-        }
     </script>
 </body>
 </html>
