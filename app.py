@@ -6,11 +6,11 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 from cvzone.HandTrackingModule import HandDetector
 
-# Load the model
+# Load the trained model
 model_path = "Model/mobilenetv3_sign_language_model.keras"
 model = load_model(model_path)
 
-# Labels for sign language
+# Labels for sign language gestures
 labels = ["Hello", "Yes", "No", "I Love You", "Okay", "Please", "Thank You"]
 
 # Initialize Camera & Hand Detector
@@ -19,11 +19,12 @@ detector = HandDetector(maxHands=1)
 
 # Image Processing Parameters
 offset = 20
-imgSize = 224  # ResNet50 requires 224x224 input
+imgSize = 224  # MobileNetV3 requires 224x224 input size
 
+# Flask Application
 app = Flask(__name__)
 
-# Function to capture video feed and send it to front-end
+# Function to capture video feed and send it to the front-end
 def generate_frames():
     while True:
         success, img = cap.read()
@@ -89,7 +90,7 @@ def generate_frames():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html')  # Renders the UI
 
 @app.route('/video_feed')
 def video_feed():
