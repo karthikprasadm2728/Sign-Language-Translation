@@ -1,34 +1,46 @@
+<!-- templates/index.html -->
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sign Language Translator</title>
+    <title>Live Sign Language Translator</title>
 </head>
 <body>
-    <input type="file" id="upload" accept="image/*" />
-    <button onclick="sendImage()">Predict</button>
-    <div id="result"></div>
+    <h2>Live Sign Language Translator</h2>
+    <video id="webcam" autoplay playsinline width="224" height="224"></video>
+    <canvas id="canvas" width="224" height="224" style="display: none;"></canvas>
+    <button onclick="captureAndSend()">Translate</button>
+    <p id="result">Prediction: </p>
 
     <script>
-        function sendImage() {
-            const fileInput = document.getElementById('upload');
-            const file = fileInput.files[0];
-            const reader = new FileReader();
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
-            reader.onloadend = function () {
-                fetch('/predict', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ image: reader.result })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('result').textContent = "Prediction: " + data.prediction;
-                });
-            };
+        // Start webcam stream
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            });
 
-            if (file) reader.readAsDataURL(file);
+        function captureAndSend() {
+            // Draw current frame to canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/jpeg');
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: dataURL })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('result').textContent = "Prediction: " + data.prediction;
+            })
+            .catch(err => {
+                document.getElementById('result').textContent = "Error: " + err.message;
+            });
         }
     </script>
 </body>
