@@ -1,7 +1,6 @@
-flask
 tensorflow==2.10.0
-opencv-python-headless==4.9.0.80  # Headless version (no GUI deps)
-Pillow==10.2.0  # For basic image processing
-mediapipe==0.10.9  # For hand tracking (pure Python)
-cvzone
-numpy
+mediapipe==0.10.9
+Pillow==10.0.1
+numpy==1.23.5
+flask==2.2.5
+opencv-python-headless==4.6.0.66
